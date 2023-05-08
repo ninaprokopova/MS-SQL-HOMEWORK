@@ -1,0 +1,540 @@
+USE master
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+ALTER DATABASE [КН301-Прокопова] set single_user with rollback immediate
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+DROP DATABASE [КН301-Прокопова]
+GO
+
+CREATE DATABASE [КН301-Прокопова]
+GO
+
+USE [КН301-Прокопова]
+GO
+
+CREATE SCHEMA Прокопова 
+GO
+
+ CREATE TABLE [Прокопова].Groups
+(
+	Code_group int NOT NULL,
+	Name_group nvarchar(25) NULL,
+	Num_course int NULL,
+	Name_speciality nvarchar(100) NULL,
+	CONSTRAINT PK_Code_group PRIMARY KEY (Code_group)
+)
+GO
+
+ CREATE TABLE [Прокопова].Lectors
+(
+	Code_lector int NOT NULL,
+	Name_lector nvarchar(100) NULL,
+	Science nvarchar(100) NULL,
+	Post nvarchar(100) NULL,
+	Date_ date NULL,
+	CONSTRAINT PK_Code_lector PRIMARY KEY (Code_lector)
+)
+GO
+
+ CREATE TABLE [Прокопова].Subjects
+(
+	Code_subject int NOT NULL,
+	Name_subject nvarchar(100) NULL,
+	Count_hours int NULL,
+	CONSTRAINT PK_Code_subject PRIMARY KEY (Code_subject)
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.Groups 
+  VALUES 
+ (1, 'МЕН-190301', 1, 'Математика'),
+ (2, 'УГИЗ-450001', 4, 'Туризм'),
+ (3, 'РИ-349870', 3, 'Программная инженерия'),
+ (4, 'ЭН-245367', 2, 'Электротехника'),
+ (5, 'ЭУ-145360', 1, 'Экономика'),
+ (6, 'АС-234543', 2, 'Архитектура'),
+ (11, 'Ас-31', 3, 'Архитектура'),
+ (12, 'АС-5167', 5, 'Строительство')
+ GO
+
+  SELECT * FROM [КН301-Прокопова].Прокопова.Groups
+
+  INSERT INTO [КН301-Прокопова].Прокопова.Subjects 
+  VALUES 
+ (1, 'Философия', 100),
+ (2, 'История', 100),
+ (3, 'Физическая культура', 200),
+ (4, 'Математика', 150),
+ (5, 'Математическая экономика', 50),
+ (6, 'Иностранный язык', 200),
+ (7, 'Математический анализ', 50),
+ (8, 'Правоведение', 50),
+ (9, 'Высшая математика', 100)
+ GO
+
+ SELECT * FROM [КН301-Прокопова].Прокопова.Subjects
+
+INSERT INTO [КН301-Прокопова].Прокопова.Lectors 
+VALUES 
+(1, 'lector1', 'нет', 'преподаватель', '1/3/2000'),
+(2, 'lector2', 'кандидат', 'доцент', '2/3/2000'),
+(3, 'lector3', 'доктор т.н.', 'профессор', '3/5/2000'),
+(4, 'lector4', 'нет', 'ассистент', '4/9/2000'),
+(5, 'lector5', 'кандидат', 'доцент', '5/9/2000'),
+(6, 'lector6', 'доктор', 'доцент', '6/9/2000'),
+(7, 'lector7', 'нет', 'преподаватель', '7/9/2000'),
+(8, 'lector8', 'кандидат', 'доцент', '8/9/2000'),
+(9, 'lector9', 'доктор', 'профессор', '9/9/2000'),
+(10, 'lector10', 'нет', 'преподаватель', '10/9/2000'),
+(12,	'lector12',	'доктор т.н.',	'профессор',	'12/9/2010'),
+(14,	'lector14',	'кандидат',	'доцент',	'14/9/2010')
+GO
+
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Lectors
+
+ CREATE TABLE [КН301-Прокопова].Прокопова.Students
+(
+	Code_stud nvarchar(25) NOT NULL,
+	Code_group int NOT NULL,
+	Surname nvarchar(100) NULL,
+	Name_ nvarchar(100) NULL,
+	Lastname nvarchar(100) NULL,
+	Birthday date NULL,
+	Phone bigint NULL,
+	CONSTRAINT PK_Code_stud PRIMARY KEY (Code_stud),
+	CONSTRAINT FK_Code_group FOREIGN KEY (Code_group) 
+	REFERENCES [КН301-Прокопова].Прокопова.Groups(Code_group),
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.Students 
+VALUES 
+('1', 1, 'Коростелева', 'Ксения', 'Анатольевна', '1992-02-20', 9607771977),
+('АС-12-02', 2, 'Нестерова', 'Ольга', 'Борисовна', '24.03.1976', 9617771976),
+('ПИ-14-03', 5, 'Шайхиева', 'Альбина', 'Ахнафовна', '21.03.1995', 9627771975),
+('4', 1, 'Хмелевский', 'Николай', 'Николаевич', '14.03.1994', 9637771974),
+('5', 5, 'Докукин', 'Артур', 'Викторович', '10.05.1993', 9647771973),
+('6', 1, 'Земской', 'Игорь', 'Викторович', '24.04.1986', 220011),
+('7', 2, 'Цурина', 'Виктория', 'Денисовна', '30.08.1977', 9667771971),
+('8', 3, 'Кузьмин', 'Тимур', 'Вячеславович', '08.03.1994', 9677771970),
+('9', 4, 'Шамка', 'Виктория', 'Александровна', '13.10.1994', 9687771969),
+('10', 5, 'Шипина', 'Виктория', 'Игоревна', '25.04.1994', 9697771968),
+('11', 6, 'Синяева', 'Ксения', 'Анатольевна', '14.08.1993', 226066),
+('БИ-12-02', 2, 'Олива', 'Росальба', '', '24.06.1976', 9717771966),
+('13', 3, 'Максимов', 'Ефим', 'Петрович', '04.10.1992', 9727771965),
+('14', 4, 'Васьков', 'Павел', 'Петрович', '08.10.1994', 9737771964),
+('15', 5, 'Васьков', 'Павел', 'Павлович', '08.08.1994', 9747771963),
+('16', 1, 'Карпачева', 'Оксана', 'Николаевна', '07.03.1995', 9757771962),
+('17', 2, 'Костыгова', 'Алина', 'Вадимовна', '06.09.1977', 9767771961),
+('18', 6, 'Егорова', 'Карина', 'Юрьевна', '10.02.1994', 225566),
+('19', 4, 'Шарыгина', 'Мария', 'Дмитриевна', '29.04.1995', 9787771959),
+('20', 5, 'Михайлов', 'Сергей', 'Владимирович', '25.10.1994', 9797771958),
+('21', 1, 'Никитин', 'Никита', 'Александрович', '19.08.1996', 9807771957),
+('22', 6, 'Перевалов', 'Михаил', 'Сергеевич', '18.02.1986', 9817771956),
+('23', 4, 'Путинцев', 'Иван', 'Евгеньевич', '10.01.1993', 9827771955),
+('24', 3, 'Андронова', 'Александра', 'Игоревна', '15.09.1994', 9837771954),
+('25', 4, 'Гилев', 'Сергей', 'Алексеевич', '01.12.1995', 9847771953),
+('26', 5, 'Мусина', 'Гульшат', 'Миннифатыховна', '06.02.1993', 9857771952),
+('27', 1, 'Шакирова', 'Надежда', 'Алексеевна', '01.09.1995', 9867771951),
+('28', 6, 'Одайкина', 'Екатерина', 'Олеговна', '05.11.1993', 9877771950),
+('29', 4, 'Живкова', 'Светлана', 'Дмитриевна', '17.12.1993', 9887771949),
+('30', 4, 'Безбородова', 'Ирина', 'Сергеевна', '21.01.1993', 9897771948),
+('31', 5, 'Ундольская', 'Полина', 'Андреевна', '17.08.1994', 9907771947),
+('32', 3, 'Доронина', 'Анастасия', 'Дмитриевна', '25.08.1995', 9917771946),
+('42', 11, 'Иванова', 'Татьяна', 'Петровна', '03.03.1976', 220677),
+('51', 11, 'Портнова', 'Анна', 'Ивановна', '21.11.1977', 225577),
+('45', 11, 'Иванов', 'Иван', 'Иванович', '02.12.1977', 227777),
+('АС-01', 12, 'Студент1', '', '', '03.12.1977', 226650),
+('АС-02', 12, 'Студент2', '', '', '04.12.1977', 226651),
+('АС-03', 12, 'Студент3', '', '', '05.12.1977', 226652),
+('АС-04', 12, 'Студент4', '', '', '06.12.1977', 226653),
+('АС-05', 12, 'Студент5', '', '', '07.12.1977', 226654),
+('АС-06', 12, 'Студент6', '', '', '08.12.1977', 226655),
+('АС-07', 12, 'Студент7', '', '', '09.12.1977', 226656),
+('АС-08', 12, 'Студент8', '', '', '10.12.1977', 226657),
+('АС-09', 12, 'Студент9', '', '', '11.12.1977', 226658),
+('АС-10', 12, 'Студент10', '', '', '12.12.1977', 226659),
+('АС-11', 12, 'Студент11', '', '', '13.12.1977', 226660),
+('АС-12', 12, 'Студент12', '', '', '14.12.1977', 226661),
+('АС-13', 12, 'Студент13', '', '', '15.12.1977', 226662),
+('АС-14', 12, 'Студент14', '', '', '16.12.1977', 226663),
+('АС-15', 12, 'Студент15', '', '', '17.12.1977', 226664),
+('АС-16', 12, 'Студент16', '', '', '18.12.1977', 226665),
+('АС-17', 12, 'Студент17', '', '', '19.12.1977', 226666),
+('АС-18', 12, 'Студент18', '', '', '20.12.1977', 226667),
+('АС-19', 12, 'Студент19', '', '', '21.12.1977', 226668),
+('АС-20', 12, 'Студент20', '', '', '22.12.1977', 226669),
+('АС-21', 12, 'Студент21', '', '', '23.12.1977', 226670),
+('АС-22', 12, 'Студент22', '', '', '24.12.1977', 226671),
+('АС-23', 12, 'Студент23', '', '', '25.12.1977', 226672),
+('АС-24', 12, 'Студент24', '', '', '26.12.1977', 226673),
+('АС-25', 12, 'Студент25', '', '', '27.12.1977', 226674),
+('АС-26', 12, 'Студент26', '', '', '28.12.1977', 226675)
+GO
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Students
+
+ CREATE TABLE [Прокопова].Progress
+(
+	Code_stud nvarchar(25) NOT NULL,
+	Code_subject int NOT NULL,
+	Code_lector int NOT NULL,
+	Date_exam date NULL,
+	Estimate tinyint NULL,
+	Code_progress int NULL,
+	CONSTRAINT FK_Code_stud FOREIGN KEY (Code_stud) 
+	REFERENCES [КН301-Прокопова].Прокопова.Students(Code_stud),
+	CONSTRAINT FK_Code_subject FOREIGN KEY (Code_subject) 
+	REFERENCES [КН301-Прокопова].Прокопова.Subjects(Code_subject),
+	CONSTRAINT FK_Code_lector FOREIGN KEY (Code_lector) 
+	REFERENCES [КН301-Прокопова].Прокопова.Lectors(Code_lector),
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.Progress 
+VALUES 
+('1', 1, 1, '14.01.2003', 70, 1),
+('1', 2, 2, '16.01.2003', 60, 2),
+('1', 3, 3, '01.02.2003', 100, 3),
+('6', 1, 1, '14.01.2003', 60, 4),
+('АС-12-02', 1, 1, '14.01.2003', 50, 5),
+('15', 3, 5, '01.01.2003', 70, 6),
+('4', 2, 2, '16.01.2003', 30, 7),
+('4', 7, 1, '17.01.2003', 100, 16),
+('АС-10', 3, 4, '12.01.2004', 39, 8),
+('АС-11', 3, 4, '12.01.2004', 39, 9),
+('АС-12', 3, 4, '01.01.2003', 39, 10),
+('АС-13', 3, 4, '01.01.2003', 39, 11),
+('АС-14', 3, 4, '01.01.2003', 39, 12),
+('АС-15', 3, 4, '01.01.2003', 39, 13),
+('АС-12', 3, 4, '12.01.2004', 39, 14),
+('АС-12', 1, 4, '15.01.2004', 39, 15),
+('20', 1, 4, '16.01.2004', 20, 18),
+('21', 1, 4, '16.01.2004', 20, 19),
+('22', 1, 4, '16.01.2004', 20, 20),
+('23', 1, 4, '16.01.2004', 20, 21),
+('24', 1, 4, '16.01.2004', 20, 22),
+('25', 1, 4, '16.01.2004', 20, 23),
+('26', 1, 4, '16.01.2004', 20, 24),
+('27', 1, 4, '16.01.2004', 20, 25),
+('28', 1, 4, '16.01.2004', 20, 26),
+('29', 1, 4, '16.01.2004', 20, 27),
+('30', 1, 4, '16.01.2004', 20, 28)
+GO
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Progress
+
+--1.	Вывести список фамилий, имен, отчеств преподавателей (поле Name_lector), их должности (поле Post) 
+--и ученые степени (поле Science) из таблицы Lectors, отсортировать результат по названиям должностей 
+--по возрастанию (использовать поле Post) и по ученым степеням по убыванию (использовать поле Science).
+
+SELECT Name_lector as 'Имя лектора',
+Post as 'Должность',
+Science as 'Учёная степень'
+FROM [КН301-Прокопова].Прокопова.Lectors
+ORDER BY Post, Science DESC;
+
+--2.	Вывести даты экзаменов (поле Date_exam) из таблицы Progress и фамилии, имена, отчества преподавателей 
+-- (поле Name_lector) из таблицы Lectors, принимавших в эти даты экзамены.
+
+SELECT FORMAT(Date_exam, 'dd.MM.yyyy') as 'Дата экзамена',
+Name_lector as 'Имя преподавателя'
+FROM [КН301-Прокопова].Прокопова.Progress
+INNER JOIN [КН301-Прокопова].Прокопова.Lectors 
+ON [КН301-Прокопова].Прокопова.Progress.Code_lector = [КН301-Прокопова].Прокопова.Lectors.Code_lector;
+
+
+--3.	Вывести список преподавателей (поле Name_lector) из таблицы
+--Lectors и их должности (поле Post), которые не являются докторами технических наук, т.е. значение поля Science не равно ‘д.т.н.'.
+SELECT Name_lector as 'Имя лектора',
+Post as 'Должность'--,
+--Science as 'Учёная степень'
+FROM [КН301-Прокопова].Прокопова.Lectors
+WHERE Science != 'доктор т.н.'
+
+-- 4.	Вывести список студентов (поля Surname, Name, Lastname) и их телефоны (поле Phone) 
+--из таблицы Students, если значения телефонов находятся в диапазоне от 220000 до 226666 (условие по полю Phone).
+SELECT Surname as 'Фамилия',
+Name_ as 'Имя',
+Lastname as 'Отчество',
+Phone as 'Телефон'
+FROM [КН301-Прокопова].Прокопова.Students
+WHERE Phone >= 220000 AND Phone <=226666
+
+
+-- 5.	Вывести список дисциплин (поле Name_subject) из таблицы Subjects, которые начинаются на букву ‘М'.
+SELECT Name_subject as 'Дисциплина'
+FROM [КН301-Прокопова].Прокопова.Subjects
+WHERE Name_subject LIKE 'М%'
+
+--6.	Вывести список групп (поле Name_group) и номера курсов (поле Num_course) из таблицы Groups, 
+--в которых учатся студенты с датами рождения с 01.01.1976 по 01.01.1978 (условие по полю Birthday из таблицы Students) 
+--и кодами из диапазона 10 - 150 (условие по полю Code_stud из таблицы Students).
+SELECT DISTINCT Name_group as Группа,
+Num_course as Курс
+FROM [КН301-Прокопова].Прокопова.Groups
+INNER JOIN [КН301-Прокопова].Прокопова.Students 
+ON [КН301-Прокопова].Прокопова.Groups.Code_group = [КН301-Прокопова].Прокопова.Students.Code_group
+WHERE DATEDIFF(day, Birthday,'01.01.1976') <= 0 AND DATEDIFF(day, Birthday,'01.01.1978') >= 0
+AND LEN(Code_stud)<=3 AND CAST(Code_stud as int) >= 10 AND CAST(Code_stud as int) < 150
+
+--7.	Вывести список всех преподавателей (Name_lector), их ученые
+--степени (поле Science) и срок их работы в годах (использовать поле Date_ из таблицы Lectors).
+SELECT Name_lector as Имя,
+Science as 'Учёная степень',
+DATEDIFF(year, Date_, GETDATE()) as 'Срок работы в годах'
+FROM [КН301-Прокопова].Прокопова.Lectors
+
+--8.	Вывести фамилии и имена студентов (поля Surname, Name из таблицы Students) с максимальным 
+--средним баллом за весь период обучения (условие по полю Estimate из таблицы Progress).
+
+SELECT * FROM
+(SELECT AVG(Estimate) AS [Максимальный балл], Surname as 'Фамилия', Name_ as 'Имя'
+FROM [КН301-Прокопова].Прокопова.Students AS A
+INNER JOIN [КН301-Прокопова].Прокопова.Progress 
+ON [КН301-Прокопова].Прокопова.Progress.Code_stud = A.Code_stud
+GROUP BY Surname, Name_) AS Query
+WHERE [Максимальный балл] = (SELECT MAX([Максимальный балл]) FROM (
+							SELECT AVG(Estimate) AS [Максимальный балл]
+							FROM [КН301-Прокопова].Прокопова.Students AS A
+							INNER JOIN [КН301-Прокопова].Прокопова.Progress 
+							ON [КН301-Прокопова].Прокопова.Progress.Code_stud = A.Code_stud
+							GROUP BY Surname) AS Query); 
+
+--9.	Вывести список студентов (поля Surname, Name, Lastname) и их телефоны (поле Phone) 
+--из таблицы Students, если значения телефонов находятся в диапазоне, хранящемся в переменных Phone_begin и Phone_end.
+DECLARE @Phone_begin BIGINT;
+DECLARE @Phone_end BIGINT;
+SET @Phone_begin = 9820000000;
+SET @Phone_end = 11111111111;
+SELECT *
+FROM [КН301-Прокопова].Прокопова.Students
+WHERE Phone >= @Phone_begin AND Phone <= @Phone_end;
+
+--10.	Вывести имена студентов (поля Surname, Name), названия и коды преподавателей 
+--(поля Name_lector, Code_lector из таблицы Lectors), которым сдавали студенты экзамены, 
+--а также оценки за предметы (поле Estimate), причем таблица Students будет использоваться 
+--с именем ‘A', таблица Progress будет использоваться с именем ‘B', а таблица Lectors будет 
+--использоваться с именем ‘C'.
+
+SELECT DISTINCT Surname + ' ' + Name_ as 'Имя студента', 
+Name_lector as 'Имя лектора',
+C.Code_lector as 'Код лектора',
+Estimate as 'Оценка'
+FROM [КН301-Прокопова].Прокопова.Students as A
+INNER JOIN [КН301-Прокопова].Прокопова.Progress as B 
+ON A.Code_stud = B.Code_stud
+INNER JOIN [КН301-Прокопова].Прокопова.Lectors as C 
+ON B.Code_lector = C.Code_lector
+
+--11.	Вывести все сведения о сдачах экзаменов (все поля из таблицы Progress) 
+--и список студентов (поля Surname, Name из таблицы Students), которые по таблице 
+--Progress сдавали экзамены самыми последними (дата сдачи экзаменов Date_exam максимальна).
+SELECT A.Lastname + ' ' + A.Name_ as 'Имя студента',
+B.Code_stud as 'Номер студенческого',
+B.Code_subject as 'Код предмета',
+B.Code_lector as 'Код лектора',
+B.Date_exam as 'Дата экзамена',
+B.Estimate as 'Оценка',
+Code_progress
+FROM [КН301-Прокопова].Прокопова.Students as A
+INNER JOIN [КН301-Прокопова].Прокопова.Progress as B 
+ON A.Code_stud = B.Code_stud
+WHERE Date_exam = (SELECT MAX(Date_exam)
+FROM [КН301-Прокопова].Прокопова.Progress)
+
+--12.	Увеличить номер курса (поле Num_course) у всех групп на единицу в таблице Groups, 
+-- если системная дата равна значению «первое сентября нового учебного года».
+DECLARE @FIRSTSEPTEMBER date;
+SET @FIRSTSEPTEMBER = '01.09.2000';
+DECLARE @CURDATE date;
+SET @CURDATE = GETDATE();
+IF DATEPART(MONTH, @FIRSTSEPTEMBER) = DATEPART(MONTH, @CURDATE) AND
+DATEPART(DAY, @FIRSTSEPTEMBER) = DATEPART(DAY, @CURDATE)
+	UPDATE [КН301-Прокопова].Прокопова.Groups
+	SET Num_course = Num_course -1
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Groups
+
+
+--13.	Добавить в таблицу преподавателей Lectors новую запись, причем вместо ключевого поля поставить код 
+--(по полю Code_lector), автоматически увеличенный на единицу от максимального кода в таблице, вместо имени 
+--(поле Name_lector) - ‘Петров Савелий Яковлевич', вместо ученой степени (поле Science) - ‘к.т.н.'.
+INSERT INTO [КН301-Прокопова].Прокопова.Lectors
+VALUES
+((SELECT MAX(Code_lector)+1 
+FROM [КН301-Прокопова].Прокопова.Lectors), 'Петров Савелий Яковлевич', 'к.т.н.', NULL, NULL)
+GO
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Lectors
+
+--14.	Создать триггер для команд INSERT и UPDATE таблицы Students, запрещающий производить 
+--изменения для группы, у которой не заполнено поле название специальности.
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Students
+
+SELECT * FROM [КН301-Прокопова].Прокопова.Groups
+
+CREATE TRIGGER TASK142
+ON [КН301-Прокопова].Прокопова.Students
+INSTEAD OF INSERT, UPDATE 
+AS
+BEGIN 
+	IF (SELECT A.Name_speciality FROM [КН301-Прокопова].Прокопова.Groups as A
+		WHERE A.Code_group = (SELECT Code_group FROM inserted)) IS NOT NULL
+									BEGIN
+										IF NOT EXISTS(SELECT * FROM DELETED)
+											-- INSERT
+											BEGIN
+												PRINT 'INSERT';
+												INSERT INTO [КН301-Прокопова].Прокопова.Students(
+														Code_stud,
+														Code_group,
+														Surname,
+														Name_,
+														Lastname,
+														Birthday,
+														Phone)
+												SELECT  Code_stud,
+														Code_group,
+														Surname,
+														Name_,
+														Lastname,
+														Birthday,
+														Phone
+												FROM INSERTED
+											END
+										ELSE
+											-- UPDATE
+											BEGIN
+												PRINT 'UPDATE';
+												UPDATE [КН301-Прокопова].Прокопова.Students
+												SET Phone = INSERTED.Phone,
+													Surname = inserted.Surname
+												FROM inserted
+												where [КН301-Прокопова].Прокопова.Students.Code_stud = inserted.Code_stud
+											END
+										
+									END
+	ELSE
+		PRINT('Название специальности не заполнено')
+END
+
+INSERT INTO [КН301-Прокопова].Прокопова.Groups 
+  VALUES 
+ (2002, 'МЕН-11', 1, null)
+
+UPDATE [КН301-Прокопова].Прокопова.Groups 
+set Name_speciality = 'кн'
+where Code_group = 2002
+
+SELECT Name_speciality 
+FROM [КН301-Прокопова].Прокопова.Groups
+WHERE Code_group = 2002
+
+select * from  [КН301-Прокопова].Прокопова.Groups
+
+select * from  [КН301-Прокопова].Прокопова.Students
+where Code_stud = '2002'
+
+INSERT INTO [КН301-Прокопова].Прокопова.Students 
+VALUES 
+('2002', 2002, 'Коростелева', 'Ксения', 'Анатольевна', '1992-02-20', 9607771977)
+
+UPDATE [КН301-Прокопова].Прокопова.Students 
+SET Phone = 9607771980
+WHERE Code_stud = '2002'
+
+UPDATE [КН301-Прокопова].Прокопова.Students 
+SET Surname = 'Жукова'
+WHERE Code_stud = '2002'
+
+--15.	Создать процедуру, которая для указанной дисциплины выводит информацию об успеваемости: 
+--Дата, Преподаватель, Группа, Студент, Оценка, отсортированную по дате, преподаватель, группа, 
+--по каждой группе показать среднюю оценку, количество студентов, получивших оценку выше средней.
+Task15 @SUBJECT = 'Философия';
+
+CREATE PROCEDURE Task15
+    @SUBJECT nvarchar(50)  
+AS   
+BEGIN
+		SELECT FORMAT(Date_exam, 'dd.MM.yyyy') as 'Дата экзамена',
+		Name_lector as 'Имя лектора',
+		Name_group as 'Группа',
+		A.Surname + ' ' + A.Name_ as 'Имя студента',
+		Estimate as 'Оценка'
+		FROM [КН301-Прокопова].Прокопова.Students as A
+		INNER JOIN [КН301-Прокопова].Прокопова.Groups as G
+		ON A.Code_group = G.Code_group
+		INNER JOIN [КН301-Прокопова].Прокопова.Progress as B 
+		ON A.Code_stud = B.Code_stud
+		INNER JOIN [КН301-Прокопова].Прокопова.Lectors as C 
+		ON B.Code_lector = C.Code_lector
+		INNER JOIN [КН301-Прокопова].Прокопова.Subjects as D
+		ON B.Code_subject = D.Code_subject
+		WHERE Name_subject = @SUBJECT
+		ORDER BY Date_, Name_lector, Name_group
+
+		DECLARE @TABLE table(  
+			[Группа] nvarchar(50) NOT NULL,  
+			[Средняя оценка] tinyint NULL,
+			[Ключ] tinyint NULL);  
+		INSERT INTO @TABLE
+		SELECT Name_group as 'Группа',
+		Avg(Estimate) as 'Средняя оценка',
+		G.Code_group as 'Ключ'
+		FROM [КН301-Прокопова].Прокопова.Students as A
+		INNER JOIN [КН301-Прокопова].Прокопова.Groups as G
+		ON A.Code_group = G.Code_group
+		INNER JOIN [КН301-Прокопова].Прокопова.Progress as B 
+		ON A.Code_stud = B.Code_stud
+		INNER JOIN [КН301-Прокопова].Прокопова.Lectors as C 
+		ON B.Code_lector = C.Code_lector
+		INNER JOIN [КН301-Прокопова].Прокопова.Subjects as D
+		ON B.Code_subject = D.Code_subject
+		WHERE Name_subject = @SUBJECT
+		GROUP BY Name_group, G.Code_group
+		ORDER BY Name_group
+
+
+		DECLARE @TABLE2 table(  
+			[Группа] nvarchar(50) NOT NULL,  
+			[Количество] tinyint NULL);
+		INSERT INTO @TABLE2
+		SELECT 
+		Name_group as 'Группа',
+		Count(Name_) as 'Количество'
+		FROM [КН301-Прокопова].Прокопова.Students as A
+		INNER JOIN [КН301-Прокопова].Прокопова.Groups as G
+		ON A.Code_group = G.Code_group
+		INNER JOIN [КН301-Прокопова].Прокопова.Progress as B 
+		ON A.Code_stud = B.Code_stud
+		INNER JOIN [КН301-Прокопова].Прокопова.Lectors as C 
+		ON B.Code_lector = C.Code_lector
+		INNER JOIN [КН301-Прокопова].Прокопова.Subjects as D
+		ON B.Code_subject = D.Code_subject
+		INNER JOIN @TABLE as T
+		ON G.Code_group = T.Ключ
+		WHERE Name_subject = @SUBJECT AND Estimate > [Средняя оценка]
+		GROUP BY Name_group
+
+		SELECT T.[Группа],
+		[Средняя оценка],
+		ISNULL([Количество], 0)
+		FROM @TABLE AS T
+		LEFT JOIN @TABLE2 AS T2
+		ON T.[Группа] = T2.[Группа] 
+END
+GO  
