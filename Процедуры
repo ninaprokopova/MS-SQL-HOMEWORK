@@ -1,0 +1,225 @@
+USE master
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+ALTER DATABASE [КН301-Прокопова] set single_user with rollback immediate
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+DROP DATABASE [КН301-Прокопова]
+GO
+
+CREATE DATABASE [КН301-Прокопова]
+GO
+	
+USE [КН301-Прокопова]
+GO
+
+CREATE SCHEMA Прокопова 
+GO
+
+CREATE TABLE [КН301-Прокопова].Прокопова.Balance
+(
+	Currency nvarchar(4) NULL, /*валюта*/
+	Amount decimal(20, 2) NULL, /*количество*/
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.Balance
+  VALUES 
+ --('RUB',50000),
+ ('USD',10000),
+ ('EUR',15000)
+ --('JPY',4000),
+ --('CHF',7000),
+ --('NZD',5000)
+
+ CREATE TABLE [КН301-Прокопова].Прокопова.Converter
+(
+	CurrencyFrom nvarchar(4) NULL, /*из какой валюты*/
+	CurrencyTo nvarchar(4) NULL, /*в какую валюту*/
+	Exchange decimal(20, 6) NULL, /*количество*/
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.Converter
+  VALUES 
+ ('USD', 'USD', 1),
+ ('USD', 'EUR', 0.7263),
+ ('USD', 'GBP', 0.623),
+ ('EUR', 'EUR', 1),
+ ('EUR', 'USD', 1.3769),
+ ('EUR', 'GBP', 0.8578),
+ ('GBP', 'GBP', 1),
+ ('GBP', 'USD', 1.6052),
+ ('GBP', 'EUR', 1.1658)
+
+  SELECT * 
+ FROM [КН301-Прокопова].Прокопова.Converter
+
+ --Баланс карты
+ SELECT * 
+ FROM [КН301-Прокопова].Прокопова.Balance 
+
+--Процедура пополнения денег
+CREATE PROCEDURE ReplenishBalance
+	@currency nvarchar(4),
+	@amount decimal(20, 2)
+AS
+BEGIN
+	IF (SELECT COUNT(Currency)
+		FROM [КН301-Прокопова].Прокопова.Balance 
+		WHERE Currency = @currency) > 0
+		UPDATE [КН301-Прокопова].Прокопова.Balance
+			SET Amount = (SELECT Amount
+							FROM [КН301-Прокопова].Прокопова.Balance 
+							WHERE Currency = @currency) + @amount
+			WHERE Currency = @currency
+	ELSE
+		INSERT INTO [КН301-Прокопова].Прокопова.Balance
+		VALUES 
+		(@currency, @amount)
+END
+GO
+
+--Удаление процедуры ReplenishBalance
+DROP PROCEDURE ReplenishBalance
+GO
+
+ --Баланс карты
+ SELECT * 
+ FROM [КН301-Прокопова].Прокопова.Balance 
+
+--Пример пополнения валюты, которая есть в карточке
+SELECT Currency, Amount
+FROM [КН301-Прокопова].Прокопова.Balance 
+WHERE Currency = 'USD'
+
+ReplenishBalance @currency = 'USD', @amount=100000
+
+--Пример пополнения валюты, которой нет в карточке
+
+SELECT Currency, Amount
+FROM [КН301-Прокопова].Прокопова.Balance 
+WHERE Currency = 'GBP'
+ReplenishBalance @currency = 'GBP', @amount=100000
+
+
+--Процедура траты денег
+CREATE PROCEDURE Outlay 
+	@currency nvarchar(4),
+	@amount decimal(20, 2)
+AS
+BEGIN
+	IF (SELECT COUNT(Currency)
+		FROM [КН301-Прокопова].Прокопова.Balance 
+		WHERE Currency = @currency) = 0
+		PRINT N'У вас нет такой вылюты'
+	ELSE
+		IF (SELECT Amount
+			FROM [КН301-Прокопова].Прокопова.Balance 
+			WHERE Currency = @currency) < @amount
+			PRINT N'У вас недостаточно валюты'
+		ELSE
+			IF (SELECT Amount
+				FROM [КН301-Прокопова].Прокопова.Balance 
+				WHERE Currency = @currency) = @amount
+					DELETE FROM [КН301-Прокопова].Прокопова.Balance
+					WHERE Currency = @currency
+			ELSE
+				UPDATE [КН301-Прокопова].Прокопова.Balance
+				SET Amount = (SELECT Amount
+								FROM [КН301-Прокопова].Прокопова.Balance 
+								WHERE Currency = @currency) - @amount
+				WHERE Currency = @currency
+END
+GO
+
+--Удаление процедуры Outlay
+DROP PROCEDURE Outlay
+GO
+
+--Пример снятия валюты, которой нет в карточке
+Outlay @currency = 'AUD', @amount=100000
+
+--Пример снятия валюты, которой недостаточно
+Outlay @currency = 'EUR', @amount=100000
+
+--Пример снятия валюты, когда снимаются все деньги
+Outlay @currency = 'GBP', @amount=2000
+SELECT Currency, Amount
+FROM [КН301-Прокопова].Прокопова.Balance 
+WHERE Currency = 'GBP'
+
+--Пример снятия валюты, когда остаются деньги
+Outlay @currency = 'USD', @amount=50000
+SELECT Currency, Amount
+FROM [КН301-Прокопова].Прокопова.Balance 
+WHERE Currency = 'USD'
+
+
+--Процедура конвертации денег
+CREATE PROCEDURE ConvertMoney
+	@currencyFrom nvarchar(4),
+	@amount decimal(20, 2),
+	@currencyTo nvarchar(4)
+AS
+BEGIN
+	DECLARE @isEnoughMoney BIT
+	SET @isEnoughMoney = 0
+	IF (SELECT COUNT(Currency)
+		FROM [КН301-Прокопова].Прокопова.Balance 
+		WHERE Currency = @currencyFrom) = 0
+		PRINT N'У вас нет такой вылюты'
+	ELSE
+		IF (SELECT Amount
+			FROM [КН301-Прокопова].Прокопова.Balance 
+			WHERE Currency = @currencyFrom) < @amount
+			PRINT N'У вас недостаточно валюты'
+		ELSE
+			IF (SELECT Amount
+				FROM [КН301-Прокопова].Прокопова.Balance 
+				WHERE Currency = @currencyFrom) = @amount
+					BEGIN 
+					SET @isEnoughMoney = 1
+					DELETE FROM [КН301-Прокопова].Прокопова.Balance
+					WHERE Currency = @currencyFrom
+					END
+			ELSE
+				SET @isEnoughMoney = 1
+				UPDATE [КН301-Прокопова].Прокопова.Balance
+				SET Amount = (SELECT Amount
+								FROM [КН301-Прокопова].Прокопова.Balance 
+								WHERE Currency = @currencyFrom) - @amount
+				WHERE Currency = @currencyFrom
+	IF @isEnoughMoney = 1
+		BEGIN
+		DECLARE @amountOfNewCurrency decimal(20, 2);
+		SET @amountOfNewCurrency = @amount * (SELECT )
+		IF (SELECT COUNT(Currency)
+			FROM [КН301-Прокопова].Прокопова.Balance 
+			WHERE Currency = @currencyTo) > 0
+			UPDATE [КН301-Прокопова].Прокопова.Balance
+				SET Amount = (SELECT Amount
+								FROM [КН301-Прокопова].Прокопова.Balance 
+								WHERE Currency = @currency) + @amount
+				WHERE Currency = @currency
+		ELSE
+			INSERT INTO [КН301-Прокопова].Прокопова.Balance
+			VALUES 
+			(@currency, @amount)
+		END
+END
+GO
+
+--Удаление процедуры ConvertMoney
+DROP PROCEDURE ConvertMoney
+GO
