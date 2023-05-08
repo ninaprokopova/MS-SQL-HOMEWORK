@@ -1,0 +1,581 @@
+USE master
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+ALTER DATABASE [КН301-Прокопова] set single_user with rollback immediate
+GO
+
+IF  EXISTS (
+	SELECT name 
+		FROM sys.databases 
+		WHERE name = N'КН301-Прокопова'
+)
+DROP DATABASE [КН301-Прокопова]
+GO
+
+CREATE DATABASE [КН301-Прокопова]
+GO
+
+USE [КН301-Прокопова]
+GO
+
+CREATE SCHEMA Прокопова 
+GO
+
+--таблица возможных букв
+CREATE TABLE [КН301-Прокопова].Прокопова.possibleLetters
+(
+	letter nvarchar(1) NULL,
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.possibleLetters 
+  VALUES 
+ ('A'),
+ ('B'),
+ ('C'),
+ ('E'),
+ ('H'),
+ ('K'),
+ ('M'),
+ ('O'),
+ ('P'),
+ ('T'),
+ ('X'),
+ ('Y')
+
+ CREATE TABLE [КН301-Прокопова].Прокопова.possibleNumbers
+(
+	letter nvarchar(1) NULL,
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.possibleNumbers 
+  VALUES 
+ ('0'),
+ ('1'),
+ ('2'),
+ ('3'),
+ ('4'),
+ ('5'),
+ ('6'),
+ ('7'),
+ ('8'),
+ ('9')
+
+  CREATE TABLE [КН301-Прокопова].Прокопова.regionStartsWith
+(
+	letter nvarchar(1) NULL,
+)
+GO
+
+  CREATE TABLE [КН301-Прокопова].Прокопова.forbiddenNumber
+(
+	number nvarchar(3) NULL,
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.forbiddenNumber 
+  VALUES 
+ ('000')
+
+
+INSERT INTO [КН301-Прокопова].Прокопова.possibleNumbers 
+  VALUES 
+ ('1'),
+ ('2'),
+ ('7')
+
+ CREATE TABLE [КН301-Прокопова].Прокопова.regionNameAndCode
+(
+	regionName nvarchar(50) NULL,
+	regionCode nvarchar(3) NOT NULL,
+	CONSTRAINT PK_regionCode PRIMARY KEY (regionCode)
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.regionNameAndCode 
+  VALUES 
+ ('Свердловская область', '66'),
+ ('Москва', '77'),
+ ('Пермский край', '59'),
+ ('Челябинская область', '74'),
+ ('Тюменская область', '72'), 
+ ('Республика Адыгея', '01')
+
+ CREATE TABLE [КН301-Прокопова].Прокопова.GBDDCodes
+(
+	regionCode nvarchar(3) NOT NULL,
+	codeGBDD nvarchar(3) NOT NULL,
+	CONSTRAINT FK_regionCode FOREIGN KEY (regionCode) 
+	REFERENCES [КН301-Прокопова].Прокопова.regionNameAndCode(regionCode),
+	CONSTRAINT PK_codeGBDD PRIMARY KEY (codeGBDD)
+)
+GO
+
+INSERT INTO [КН301-Прокопова].Прокопова.GBDDCodes 
+  VALUES 
+ ('66', '66'),
+ ('66', '96'),
+ ('66', '196'),
+ ('77', '77'),
+ ('77', '97'),
+ ('77', '99'),
+ ('77', '177'),
+ ('77', '197'),
+ ('77', '199'),
+ ('59', '59'),
+ ('59', '81'),
+ ('59', '159'),
+ ('74', '74'),
+ ('74', '174'),
+ ('74', '774'),
+ ('72', '72'),
+ ('72', '172'),
+ ('01', '01'),
+ ('01', '101')
+
+ SELECT * FROM [КН301-Прокопова].Прокопова.regionNameAndCode
+
+ SELECT * FROM [КН301-Прокопова].Прокопова.GBDDCodes
+
+ --Функция которая проверяет символ на правильный символ
+CREATE FUNCTION Прокопова.checkIfRightSymbol(@symbol nvarchar(1))
+RETURNS bit
+AS
+BEGIN
+    DECLARE @isRight bit;
+    SELECT @isRight = COUNT(letter)  
+						FROM [КН301-Прокопова].Прокопова.possibleLetters
+						WHERE letter = @symbol;
+    RETURN @isRight;
+END;
+
+--функция проверки длины номера
+CREATE FUNCTION Прокопова.checkLength(@number nvarchar(9))
+RETURNS bit
+AS
+BEGIN
+	IF LEN(@number) < 8
+	RETURN 0
+	RETURN 1
+END;
+ --Функция которая проверяет правильный ли номер
+CREATE FUNCTION Прокопова.checkIfRightNumber(@number nvarchar(3))
+RETURNS bit
+AS
+BEGIN
+	DECLARE @isForbidden bit;
+	SELECT @isForbidden = COUNT(number)  
+						FROM [КН301-Прокопова].Прокопова.forbiddenNumber
+						WHERE number = @number;
+	IF @isForbidden = 1
+		RETURN 0;
+	DECLARE @isRight1 bit;
+	DECLARE @isRight2 bit;
+	DECLARE @isRight3 bit;
+    SELECT @isRight1 = COUNT(letter)  
+						FROM [КН301-Прокопова].Прокопова.possibleNumbers
+						WHERE letter = SUBSTRING(@number, 1, 1);
+	SELECT @isRight2 = COUNT(letter)  
+						FROM [КН301-Прокопова].Прокопова.possibleNumbers
+						WHERE letter = SUBSTRING(@number, 2, 1);
+	SELECT @isRight3 = COUNT(letter)  
+						FROM [КН301-Прокопова].Прокопова.possibleNumbers
+						WHERE letter = SUBSTRING(@number, 3, 1);
+    RETURN @isRight1 & @isRight2 & @isRight3;
+END;
+ --Функция которая проверяет правильный ли регион
+CREATE FUNCTION Прокопова.checkIfRightRegion(@number nvarchar(3))
+RETURNS bit
+AS
+BEGIN
+	DECLARE @isRight1 bit;
+    SELECT @isRight1 = COUNT(codeGBDD) FROM [КН301-Прокопова].Прокопова.GBDDCodes
+						WHERE codeGBDD = @number;
+    RETURN @isRight1;
+END;
+--Функция которая проверяет корректность времени
+CREATE FUNCTION Прокопова.checkIfRightTime(@number nvarchar(9), @fixTime time)
+RETURNS bit
+AS
+BEGIN
+	DECLARE @recordsCount int;
+    SELECT @recordsCount = COUNT(fullNumber) FROM [КН301-Прокопова].Прокопова.baza
+						WHERE fullNumber = @number AND NOT @fixTime = fixTime;
+    IF @recordsCount = 0
+		RETURN 1;
+	DECLARE @lastTime time;
+	SELECT TOP(1) @lastTime = fixTime from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number AND NOT @fixTime = fixTime
+									ORDER BY fixTime DESC
+	IF DATEDIFF(MINUTE, @lastTime, @fixTime) < 10
+		RETURN 0
+	RETURN 1
+END;
+
+DROP FUNCTION Прокопова.checkIfRightTime
+GO
+  --Функция которая проверяет корректность направления
+CREATE FUNCTION Прокопова.checkIfRightDirection(@number nvarchar(9), @direction bit, @fixTime time)
+RETURNS bit
+AS
+BEGIN
+	DECLARE @recordsCount int;
+    SELECT @recordsCount = COUNT(fullNumber) FROM [КН301-Прокопова].Прокопова.baza
+						WHERE fullNumber = @number AND NOT @fixTime = fixTime;
+    IF @recordsCount = 0
+		RETURN 1;
+	SELECT @recordsCount = COUNT(fullNumber) FROM [КН301-Прокопова].Прокопова.baza
+						WHERE fullNumber = @number AND @fixTime = fixTime;
+	IF @recordsCount = 2
+		RETURN 0;
+	DECLARE @lastDirection bit;
+	SELECT TOP(1) @lastDirection = direction from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number AND NOT @fixTime = fixTime
+									ORDER BY fixTime DESC
+	IF @lastDirection = @direction
+		RETURN 0
+	RETURN 1
+END;
+--Удаление функции выше
+DROP FUNCTION Прокопова.checkIfRightDirection
+GO
+
+--Функция которая определяет тип машины
+CREATE FUNCTION Прокопова.DefineTypeOfNumber(@number nvarchar(9), @region nvarchar(3))
+RETURNS nvarchar(30)
+AS
+BEGIN
+	DECLARE @recordsCount int;
+    SELECT @recordsCount = COUNT(fullNumber) FROM [КН301-Прокопова].Прокопова.baza
+						WHERE fullNumber = @number;
+    IF @recordsCount > 2
+		RETURN 'Прочий тип автомобиля';
+	DECLARE @lastPost int;
+	DECLARE @firstPost int;
+	DECLARE @firstDirection bit;
+	DECLARE @lastDirection bit;
+	--последний
+	SELECT TOP(1) @lastPost = numberOfGBDD from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number
+									ORDER BY fixTime DESC
+	SELECT TOP(1) @lastDirection = direction from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number
+									ORDER BY fixTime DESC
+	--первый
+	SELECT TOP(1) @firstPost = numberOfGBDD from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number
+									ORDER BY fixTime 
+	SELECT TOP(1) @firstDirection = direction from [КН301-Прокопова].Прокопова.baza
+									WHERE fullNumber = @number
+									ORDER BY fixTime 
+	if (@region = '66' or @region = '96' or @region = '196') and
+	@firstDirection = 0 and @lastDirection = 1 and 
+	@firstPost = @lastPost
+	RETURN 'Местный автомобиль'
+	if @firstDirection = 1 and @lastDirection = 0 and 
+	@firstPost = @lastPost
+	RETURN 'Иногородний автомобиль'
+	if @firstDirection = 1 and @lastDirection = 0 and 
+	NOT @firstPost = @lastPost
+	RETURN 'Транзитный автомобиль'
+	RETURN 'Прочий тип автомобиля'
+END;
+
+--создание таблицы База
+CREATE TABLE [КН301-Прокопова].Прокопова.baza
+(
+	fullNumber nvarchar(9) NULL,
+	region nvarchar(3) NULL,
+	fixTime time NULL, 
+	direction bit NULL,
+	numberOfGBDD tinyint NULL,
+	CHECK ( Прокопова.checkLength(fullNumber) &
+			Прокопова.checkIfRightSymbol(SUBSTRING(fullNumber, 1, 1)) &
+			Прокопова.checkIfRightSymbol(SUBSTRING(fullNumber, 5, 5)) &
+			Прокопова.checkIfRightSymbol(SUBSTRING(fullNumber, 6, 6)) &
+			Прокопова.checkIfRightNumber(SUBSTRING(fullNumber, 2, 4)) &
+			Прокопова.checkIfRightRegion(SUBSTRING(fullNumber, 7, LEN(fullNumber))) 
+			= 1)
+)
+GO
+
+CREATE TRIGGER base_insteadOfInsert 
+ON [КН301-Прокопова].Прокопова.baza
+INSTEAD OF INSERT 
+AS
+BEGIN 
+	DECLARE @number nvarchar(9);
+	SELECT @number = fullNumber FROM INSERTED;
+	DECLARE @time time;
+	SELECT @time = fixTime FROM INSERTED;
+	DECLARE @dir bit;
+	SELECT @dir = direction FROM INSERTED;
+	IF Прокопова.checkIfRightTime(@number, @time) = 0
+		PRINT('Время между пересечениями поста меньше 10 минут')
+	ELSE IF Прокопова.checkIfRightDirection(@number, @dir, @time) = 0
+		PRINT('Некорректное направление движения: нельзя 2 раза въехать или выехать')
+	ELSE
+		INSERT INTO [КН301-Прокопова].Прокопова.baza(
+					fullNumber,
+					region,
+					fixTime, 
+					direction,
+					numberOfGBDD)
+		SELECT  fullNumber,
+				SUBSTRING(fullNumber, 7, LEN(fullNumber)),
+				fixTime, 
+				direction,
+				numberOfGBDD
+		FROM INSERTED
+END
+
+select * from [КН301-Прокопова].Прокопова.baza
+
+INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AA96', null, '12:00:00', 1, 1)
+
+INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AA96', null, '12:10:00', 0, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AA66', null, '12:30:00', 0, 1)
+
+   INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AA66', null, '12:45:00', 1, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A555AA177', null, '12:00:00', 1, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A555AA177', null, '12:30:00', 0, 1)
+
+ 
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA177', null, '12:00:00', 1, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA177', null, '12:30:00', 0, 3)
+
+ 
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA196', null, '12:00:00', 0, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA196', null, '12:30:00', 1, 4)
+
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA01', null, '12:30:00', 1, 4)
+
+  INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A777AA01', null, '13:30:00', 0, 2)
+
+--таблица для одной машины
+ SELECT fullNumber as 'Номер машины',
+	regionName as 'Название региона',
+	fixTime as 'Время фиксации номера',
+	direction as 'Въезд(1) выезд(0)',
+	numberOfGBDD as 'Номер поста ГИБДД'
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD
+WHERE fullNumber = 'A333AA96'
+
+ --таблица определением типа машины
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as 'Тип автомобиля'
+ FROM [КН301-Прокопова].Прокопова.baza
+
+
+SELECT * FROM Прокопова.AllCars3
+
+SELECT * FROM Прокопова.[Местные автомобили]
+
+SELECT * FROM Прокопова.[Прочие автомобили]
+
+SELECT * FROM Прокопова.[Транзитные автомобили]
+
+SELECT * FROM Прокопова.[Иногородние автомобили]
+
+CREATE VIEW Прокопова.AllCars3
+AS  SELECT fullNumber as 'Номер машины', 
+		regionName as 'Название региона',
+		CONVERT(VARCHAR(5), fixTime, 108) as 'Время фиксации номера',
+		direction as 'Въезд(1) выезд(0)',
+		numberOfGBDD as 'Номер поста ГИБДД', 
+		[Тип автомобиля] FROM (
+ SELECT fullNumber,
+	regionName,
+	fixTime,
+	direction,
+	numberOfGBDD
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD) as tableA
+ INNER JOIN (
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as [Тип автомобиля]
+ FROM [КН301-Прокопова].Прокопова.baza) as tableB ON tableA.fullNumber = tableB.[Номер машины]
+
+CREATE VIEW Прокопова.[Местные автомобили]
+ AS
+  SELECT fullNumber as 'Номер машины', 
+		regionName as 'Название региона',
+		CONVERT(VARCHAR(5), fixTime, 108) as 'Время фиксации номера',
+		direction as 'Въезд(1) выезд(0)',
+		numberOfGBDD as 'Номер поста ГИБДД', 
+		[Тип автомобиля] FROM (
+ SELECT fullNumber,
+	regionName,
+	fixTime,
+	direction,
+	numberOfGBDD
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD) as tableA
+ INNER JOIN (
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as [Тип автомобиля]
+ FROM [КН301-Прокопова].Прокопова.baza) as tableB ON tableA.fullNumber = tableB.[Номер машины]
+ WHERE [Тип автомобиля] = 'Местный автомобиль'
+
+CREATE VIEW Прокопова.[Прочие автомобили]
+ AS
+  SELECT fullNumber as 'Номер машины', 
+		regionName as 'Название региона',
+		CONVERT(VARCHAR(5), fixTime, 108) as 'Время фиксации номера',
+		direction as 'Въезд(1) выезд(0)',
+		numberOfGBDD as 'Номер поста ГИБДД', 
+		[Тип автомобиля] FROM (
+ SELECT fullNumber,
+	regionName,
+	fixTime,
+	direction,
+	numberOfGBDD
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD) as tableA
+ INNER JOIN (
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as [Тип автомобиля]
+ FROM [КН301-Прокопова].Прокопова.baza) as tableB ON tableA.fullNumber = tableB.[Номер машины]
+ WHERE [Тип автомобиля] = 'Прочий тип автомобиля'
+
+
+CREATE VIEW Прокопова.[Транзитные автомобили]
+ AS
+  SELECT fullNumber as 'Номер машины', 
+		regionName as 'Название региона',
+		CONVERT(VARCHAR(5), fixTime, 108) as 'Время фиксации номера',
+		direction as 'Въезд(1) выезд(0)',
+		numberOfGBDD as 'Номер поста ГИБДД', 
+		[Тип автомобиля] FROM (
+ SELECT fullNumber,
+	regionName,
+	fixTime,
+	direction,
+	numberOfGBDD
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD) as tableA
+ INNER JOIN (
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as [Тип автомобиля]
+ FROM [КН301-Прокопова].Прокопова.baza) as tableB ON tableA.fullNumber = tableB.[Номер машины]
+ WHERE [Тип автомобиля] = 'Транзитный автомобиль'
+
+CREATE VIEW Прокопова.[Иногородние автомобили]
+ AS
+  SELECT fullNumber as 'Номер машины', 
+		regionName as 'Название региона',
+		CONVERT(VARCHAR(5), fixTime, 108) as 'Время фиксации номера',
+		direction as 'Въезд(1) выезд(0)',
+		numberOfGBDD as 'Номер поста ГИБДД', 
+		[Тип автомобиля] FROM (
+ SELECT fullNumber,
+	regionName,
+	fixTime,
+	direction,
+	numberOfGBDD
+ FROM [КН301-Прокопова].Прокопова.baza AS tableA
+ INNER JOIN (SELECT codeGBDD, regionName FROM [КН301-Прокопова].Прокопова.GBDDCodes as tableA
+ INNER JOIN [КН301-Прокопова].Прокопова.regionNameAndCode as tableB ON tableA.regionCode = tableB.regionCode
+) AS TABLEB on tableA.region = TABLEB.codeGBDD) as tableA
+ INNER JOIN (
+ SELECT DISTINCT fullNumber as 'Номер машины',
+ Прокопова.DefineTypeOfNumber(fullNumber, region) as [Тип автомобиля]
+ FROM [КН301-Прокопова].Прокопова.baza) as tableB ON tableA.fullNumber = tableB.[Номер машины]
+ WHERE [Тип автомобиля] = 'Иногородний автомобиль'
+
+
+--разница меньше 10 минут
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333BB96', null, '12:11:00', 1, 1)
+
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333BB96', null, '12:12:00', 1, 1)
+
+  --нельзя въехать 2-ой раз
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AB66', null, '12:30:00', 0, 1)
+
+  INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AB66', null, '12:45:00', 0, 1)
+
+ --недопустимая буква 
+  INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('V333AA66', null, '12:45:00', 0, 1)
+
+ --недопустимая буква 
+  INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333ZA66', null, '12:45:00', 0, 1)
+
+ --недопустимая буква 
+  INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A333AS66', null, '12:45:00', 0, 1)
+
+ --некорректный номер 000 
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A000AA66', null, '12:45:00', 0, 1)
+
+ --некорректный регион  
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A123AA1014', null, '12:45:00', 0, 1)
+
+  --некорректный регион  
+ INSERT INTO [КН301-Прокопова].Прокопова.baza
+  VALUES 
+ ('A123AA333', null, '12:45:00', 0, 1)
+
